@@ -1,28 +1,22 @@
 {
   "name": "opencode-qdrant",
-  "version": "0.3.0",
-  "description": "Qdrant-based semantic codebase indexing plugin for OpenCode",
+  "version": "0.4.0-v2.0",
+  "description": "Qdrant-based semantic codebase indexing plugin for OpenCode V2",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./server": {
-      "import": "./dist/server.js"
-    },
-    "./tui": {
-      "import": "./dist/tui.js"
-    }
+    ".": "./dist/index.js"
   },
   "files": [
     "dist",
     "worker"
   ],
   "engines": {
-    "opencode": ">=1.0.0"
+    "opencode": ">=2.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome lint",
     "format": "biome format --write",
@@ -30,19 +24,16 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
-    "@opencode-ai/plugin": "1.18.13",
-    "@opentui/core": "0.4.5",
-    "@opentui/keymap": "0.4.5",
-    "@opentui/solid": "0.4.5",
+    "@opencode/plugin": "^2.2.0",
     "@qdrant/js-client-rest": "^1.15.1",
     "ignore": "^7.0.5",
     "minimatch": "^10.0.3",
-    "solid-js": "1.9.12",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",
     "@types/node": "^22.15.3",
+    "esbuild": "^0.24.2",
     "typescript": "^5.8.3"
   }
 }

@@ -7,9 +7,13 @@
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { discoverFiles } from "./discovery.js"
 import type { ResolvedConfig } from "./types.js"
+
+const execFileAsync = promisify(execFile)
 
 let tmpRoot: string
 
@@ -211,5 +215,23 @@ describe("discoverFiles — skip directories", () => {
     expect(rels).not.toContain("node_modules/lib/index.js")
     // .git is in SKIP_DIRS
     expect(rels).not.toContain(".git/config")
+  })
+})
+
+describe("discoverFiles — uncommitted deletions", () => {
+  test("skips tracked files deleted from the work tree", async () => {
+    // git ls-files still reports the path after `rm`, so discovery must not
+    // abort the run on the missing file.
+    await fs.rm(path.join(tmpRoot, ".git"), { recursive: true, force: true })
+    await write("keep.ts", "a\n")
+    const gone = await write("gone.ts", "b\n")
+    await execFileAsync("git", ["init", "-q"], { cwd: tmpRoot })
+    await execFileAsync("git", ["add", "-A"], { cwd: tmpRoot })
+    await fs.rm(gone)
+
+    const files = await discoverFiles(tmpRoot, baseConfig())
+    const rels = files.map((f) => f.relativePath)
+    expect(rels).toContain("keep.ts")
+    expect(rels).not.toContain("gone.ts")
   })
 })

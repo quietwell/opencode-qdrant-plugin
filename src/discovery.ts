@@ -32,6 +32,12 @@ const BINARY_EXTENSIONS = new Set([
   ".so",
 ])
 
+/** ENOENT / ENOTDIR: the path vanished between listing and opening. */
+function isMissing(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException | undefined)?.code
+  return code === "ENOENT" || code === "ENOTDIR"
+}
+
 export async function discoverFiles(directory: string, config: ResolvedConfig): Promise<FileEntry[]> {
   const relativePaths = await listPaths(directory)
   const entries: FileEntry[] = []
@@ -43,7 +49,15 @@ export async function discoverFiles(directory: string, config: ResolvedConfig): 
     }
 
     const absolutePath = path.join(directory, relativePath)
-    const stat = await fs.stat(absolutePath)
+    let stat: Awaited<ReturnType<typeof fs.stat>>
+    try {
+      stat = await fs.stat(absolutePath)
+    } catch (error) {
+      // `git ls-files` also reports tracked files deleted from the work tree.
+      // An uncommitted deletion must not abort the whole indexing run.
+      if (isMissing(error)) continue
+      throw error
+    }
     if (!stat.isFile()) {
       continue
     }
@@ -137,7 +151,14 @@ function shouldIncludePath(relativePath: string, config: ResolvedConfig) {
 }
 
 async function looksBinary(filePath: string) {
-  const file = await retryOpen(filePath, "r")
+  let file: Awaited<ReturnType<typeof retryOpen>>
+  try {
+    file = await retryOpen(filePath, "r")
+  } catch (error) {
+    // Raced with a delete between stat() and open(): skip the file.
+    if (isMissing(error)) return true
+    throw error
+  }
   try {
     const buffer = Buffer.alloc(512)
     const { bytesRead } = await file.read(buffer, 0, 512, 0)

@@ -1,5 +1,7 @@
 # opencode-qdrant
 
+> **Branch `v2`: port to OpenCode 2.x.** This branch targets the 2.x plugin API (`@opencode/plugin`) and needs OpenCode 2.0 or newer. The tools and indexing are ported; the terminal sidebar (TUI) part is not included. The rest of this README still describes the 1.x version on `main`, including its install steps, and has not been updated for 2.x yet. It type-checks and builds; it has not been through the test suite on 2.x.
+
 Semantic codebase indexing plugin for [OpenCode](https://github.com/nichochar/opencode). Uses [Qdrant](https://qdrant.tech/) vector database to index your project files and expose semantic search to AI agents.
 
 ## Features
